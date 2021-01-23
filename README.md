@@ -59,12 +59,12 @@ function rubocop() {
 ## Use Reek & Rubocop w/ ALE in VIM for automatic linting
 - Follow [ALE's installation instructions](https://github.com/dense-analysis/ale#installation-with-vim-plug "ALE's Github")
 - Create scripts to run the Reek and Rubocop linters from the ruby-dev-gems Docker container
-**/Users/matt/.vim/ale_docker_scripts/reek.sh**
+**/Users/matt/.vim/ale_docker_scripts/reek.sh** (make sure it's an executable)
 ```bash
 #!/usr/bin/env bash
 exec docker run -i --rm -v "$(pwd):/data" ruby-dev-gems reek "$@"
 ```
-**/Users/matt/.vim/ale_docker_scripts/rubocop.sh**
+**/Users/matt/.vim/ale_docker_scripts/rubocop.sh** (make sure it's an executable)
 ```bash
 #!/usr/bin/env bash
 exec docker run -i --rm -v "$(pwd):/data" ruby-dev-gems rubocop "$@"
@@ -76,6 +76,9 @@ if isdirectory('/Users/matt/.vim/ale_docker_scripts/')
   let b:ale_linters = ['reek', 'rubocop']
   let g:ale_linters_explicit = 1
   let g:ale_ruby_reek_show_context = 1
+
+  " Good for Ruby < 1.9 b/c the 'new' hash syntax came out in 1.9
+  let g:ale_ruby_rubocop_options = '--except Style/SymbolArray,Style/HashSyntax'
 
   let b:ale_ruby_reek_executable = '/Users/matt/.vim/ale_docker_scripts/reek.sh'
   let b:ale_ruby_rubocop_executable = '/Users/matt/.vim/ale_docker_scripts/rubocop.sh'
@@ -89,7 +92,13 @@ if isdirectory('/Users/matt/.vim/ale_docker_scripts/')
   \ ],
   \}
 endif
+" Change color of highlight
+highlight ALEWarning ctermbg=DarkMagenta
+highlight ALEError ctermbg=DarkMagenta
 
+" Do you want to underline text instead of highlight? See two lines below
+" highlight ALEError ctermbg=none cterm=underline
+" highlight ALEWarning ctermbg=none cterm=underline
 let g:ale_fixers =  {'ruby': ['remove_trailing_lines', 'trim_whitespace']}
 ```
 
