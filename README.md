@@ -1,7 +1,7 @@
 # Purpose
 The purpose of this is to have some Gems available from inside a Docker container in order to keep your
-system clean. Currently, the Dockerfile installs [Reek](https://github.com/troessner/reek "Reek's Github") and [Flog](https://github.com/seattlerb/flog "Flog's Github")
-
+system clean. Currently, the Dockerfile installs [Reek](https://github.com/troessner/reek "Reek's Github"),
+[Flog](https://github.com/seattlerb/flog "Flog's Github"),  and [RuboCop](https://rubocop.org/)
 ### Build Ruby Image
 ```bash
 $ git clone git@github.com:mattjg908/ruby_dev_gems.git
@@ -22,7 +22,7 @@ $ vi ~/.bashrc
 ```
 - Add a function:
 ```vi
-function reek () {
+function reek() {
   docker run -it -v `pwd`:/tmp ruby-dev-gems reek /tmp/${1}
 }
 ```
@@ -41,11 +41,58 @@ $ reek path/to/some/file.rb
 - Follow the same steps as above for Reek, but replace `reek` with `flog` (naturally).
 For convenience, here is the function you can add to your .zshrc/.bashrc:
 ```vi
-function flog () {
+function flog() {
   docker run -it -v `pwd`:/tmp ruby-dev-gems flog -d /tmp/${1}
 }
 ```
 Notice that I added the `-d` flag as I like the more verbose output.
+
+### Run Rubocop
+- Follow the same steps as above for Reek, but replace `reek` with `rubocop` (naturally).
+For convenience, here is the function you can add to your .zshrc/.bashrc:
+```vi
+function rubocop() {
+  docker run -it -v `pwd`:/tmp ruby-dev-gems rubocop /tmp/${1}
+}
+```
+
+## Use Reek & Rubocop w/ ALE in VIM for automatic linting
+- Follow [ALE's installation instructions](https://github.com/dense-analysis/ale#installation-with-vim-plug "ALE's Github")
+- Create scripts to run the Reek and Rubocop linters from the ruby-dev-gems Docker container
+**/Users/matt/.vim/ale_docker_scripts/reek.sh**
+```bash
+#!/usr/bin/env bash
+exec docker run -i --rm -v "$(pwd):/data" ruby-dev-gems reek "$@"
+```
+**/Users/matt/.vim/ale_docker_scripts/rubocop.sh**
+```bash
+#!/usr/bin/env bash
+exec docker run -i --rm -v "$(pwd):/data" ruby-dev-gems rubocop "$@"
+```
+- Add ALE configuration to your .vimrc, here's mine for example:
+```vi
+" ALE
+if isdirectory('/Users/matt/.vim/ale_docker_scripts/')
+  let b:ale_linters = ['reek', 'rubocop']
+  let g:ale_linters_explicit = 1
+  let g:ale_ruby_reek_show_context = 1
+
+  let b:ale_ruby_reek_executable = '/Users/matt/.vim/ale_docker_scripts/reek.sh'
+  let b:ale_ruby_rubocop_executable = '/Users/matt/.vim/ale_docker_scripts/rubocop.sh'
+
+  let b:ale_filename_mappings = {
+  \ 'reek': [
+  \   ['/Users/matt/.vim/ale_docker_scripts/', '/data'],
+  \ ],
+  \ 'rubocop': [
+  \   ['/Users/matt/.vim/ale_docker_scripts/', '/data'],
+  \ ],
+  \}
+endif
+
+let g:ale_fixers =  {'ruby': ['remove_trailing_lines', 'trim_whitespace']}
+```
+
 ## Other helpful commands
 
 ### Attach to container console
